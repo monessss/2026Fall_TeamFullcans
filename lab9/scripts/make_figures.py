@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from evo.core import metrics, sync  # noqa: E402
 from evo.tools import file_interface  # noqa: E402
+from trajectory_frames import prepare_d7  # noqa: E402
 
 LAB = Path(__file__).resolve().parents[1]
 RES = LAB / "results"
@@ -230,12 +231,14 @@ def d6():
 
 # --------------------------------------------------------------------------- D7
 def d7():
-    """LDSO + Kimera + ORB-SLAM3, each Sim(3)-aligned (scale corrected) to ground truth."""
-    d6d, d = RES / "d6", RES / "d7"
-    gt = file_interface.read_tum_trajectory_file(str(d6d / "data.tum"))
+    """Compare all systems at cam0, then align each with Sim(3)."""
+    d = RES / "d7"
+    prepare_d7(LAB)
+    frames = LAB / ".build/d7_frames"
+    gt = file_interface.read_tum_trajectory_file(str(frames / "data_cam0.tum"))
     est = {
-        "Kimera-VIO": d6d / "kimera" / "kimera.txt",
-        "ORB-SLAM3": d6d / "orbslam" / "orb_slam3.txt",
+        "Kimera-VIO": frames / "kimera_cam0.txt",
+        "ORB-SLAM3": frames / "orb_slam3_cam0.txt",
         "LDSO": d / "ldso.txt",
         "LDSO (no loop closure)": d / "ldso_noloop.txt",
     }
@@ -254,6 +257,7 @@ def d7():
         ape.process_data((ref, e))
         st = ape.get_all_statistics()
         res[name] = {"poses": tr.num_poses, "matched_poses": e.num_poses,
+                     "reference_point": "cam0", "association_max_diff_s": 0.01,
                      "t0": float(tr.timestamps[0]), "t1": float(tr.timestamps[-1]),
                      "raw_length": float(tr.path_length), "sim3_scale": float(s),
                      "ate_sim3": {k: float(v) for k, v in st.items()},
@@ -311,3 +315,4 @@ if __name__ == "__main__":
         d7()
     else:
         print("results/d7/ldso.txt missing: run scripts/run_ldso.sh + evaluate_d7.sh first")
+

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 ###################################################################
 # Fill the variables below
 
@@ -40,7 +41,7 @@ if [ $# -eq 0 ]; then
   echo "Using dataset at path: $DATASET_PATH"
 else
   # Parse all the options.
-  while [ -n "$1" ]; do # while loop starts
+  while (( $# )); do
       case "$1" in
         # Option -p, provides path to dataset.
       -p) DATASET_PATH=$2
@@ -82,9 +83,11 @@ echo """ Launching:
 
  """
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-}:/usr/local/lib
+mkdir -p "$OUTPUT_PATH"
+rm -f "$OUTPUT_PATH/traj_vio.csv" "$OUTPUT_PATH/StatisticsVIO.csv"
 
-$BUILD_PATH/stereoVIOEuroc \
+exec "$BUILD_PATH/stereoVIOEuroc" \
   --dataset_type="$DATASET_TYPE" \
   --dataset_path="$DATASET_PATH" \
   --initial_k=50 \
@@ -107,3 +110,4 @@ $BUILD_PATH/stereoVIOEuroc \
   --save_frontend_images=1 \
   --visualize_frontend_images=1 \
   --output_path="$OUTPUT_PATH"
+

@@ -54,20 +54,21 @@ count & 2 & 3 & 3 & 4 & 4 & 4 & 4 & 5 \\
 \item Both images show the pose--pose block after eliminating all landmarks: poses $i$ and
   $j$ are linked iff they observed a common landmark.
   \begin{itemize}
-  \item \textbf{Left (100 poses, density 0.40):} almost every pose shares landmarks with
-    almost every other pose, including poses far apart in time. The robot kept seeing the
+  \item \textbf{Left (100 poses, density 0.40):} many poses share landmarks with
+    other poses, including poses far apart in time (40\,\% block density). The robot kept seeing the
     same small set of landmarks for the whole run, so it was \emph{surveying a small
     area} (e.g.\ a single room, or moving back and forth/looping inside it). The reduced
-    camera system is nearly dense, so solving it costs close to $O(n^3)$.
+    camera system has substantially more long-range coupling than the right-hand example;
+    the actual factorisation cost depends on ordering and fill-in.
   \item \textbf{Right (about 850 poses, density 0.014):} the matrix is banded, so each
     pose only shares landmarks with poses close to it in time. The robot was
     \emph{exploring a large environment} (e.g.\ a long corridor or a large building) and
     rarely came back. The few off-diagonal segments are \emph{revisits/loop closures}: around
-    poses 270--350 the robot saw again the place it saw around poses 500--570 (the
+    poses 500--570 the robot revisited an area observed around poses 270--350 (the
     segment runs parallel to the diagonal, so it went through it in the same direction),
     and the short blocks near poses 0/630, 650/820 and 730/810 are brief revisits.
-    The thicker blocks around poses 650--700 and 720--740 mean that the robot moved slowly or
-    rotated in place there, so many consecutive poses saw the same landmarks.
+    The thicker blocks around poses 650--700 and 720--740 indicate longer shared visibility;
+    slower motion or rotation are possible explanations, not unique conclusions.
   \end{itemize}
 \end{enumerate}
 
@@ -183,8 +184,9 @@ the camera photometrically as DSO does. Descriptors such as ORB/BRIEF use intens
 comparisons, which are invariant to monotonic brightness changes. Occluded points also simply fail to
 match and are rejected by RANSAC or by robust kernels. In a direct method they become large
 photometric residuals that enter a dense, non-convex alignment with a small convergence
-basin. Direct methods are better in low-texture scenes and with motion blur, where keypoints
-are scarce.
+basin. Direct methods can use image gradients outside repeatable keypoints and may therefore
+help when keypoints are scarce; they still need informative gradients. Motion blur can
+harm both methods, so it does not establish a general advantage for direct alignment.
 
 \subsection{Deliverable 5 (optional): From landmark-based SLAM to rotation estimation}\label{sec:d5}
 
@@ -218,7 +220,7 @@ $\Pi=I-\bar A(\bar A^\top\bar A)^{-1}\bar A^\top$ is the orthogonal projector on
 complement of the range of $\bar A$ (the cycle space of the graph). Substituting back, we get
 the rotation-only problem
 \begin{equation}
-\boxed{\ \min_{R_i\in\mathrm{SO}(3),\,i=1..N}\ r^\top Q\, r+\sum_{(i,j)\in\mathcal{E}_o}\|R_j-R_i\bar R_{ij}\|_F^2,\qquad Q=B^\top\Pi B\ }
+\min_{R_i\in\mathrm{SO}(3),\,i=1,\ldots,N}\ r^\top Q\, r+\sum_{(i,j)\in\mathcal{E}_o}\|R_j-R_i\bar R_{ij}\|_F^2,\qquad Q=B^\top\Pi B
 \end{equation}
 which depends on the rotations only. The original optimal translations and landmarks are
 recovered in closed form as $x^\star(r^\star)$. The rotation term can also be written as a
@@ -227,14 +229,13 @@ graph, so the whole problem is $\min_{R\in\mathrm{SO}(3)^N} r^\top \tilde Q r$, 
 problem over rotations.
 
 \paragraph{Why the smaller problem is not necessarily faster.}
-Optimisation-based SLAM is fast because its Hessian/information matrix is \emph{sparse}
-(each measurement only involves two variables), so sparse Cholesky with a good ordering
-solves each Gauss--Newton step in about linear time. Eliminating $x$ is a Schur complement
-on all positions at once. As in D1.7, it connects every pair of poses joined by a path in
-the graph: $\Pi$ (and hence $Q$) is in general \emph{dense}, and $(\bar A^\top\bar A)^{-1}$ is the
-inverse of a graph Laplacian, which is dense for a connected graph. The rotation problem has
-$9N$ instead of $3(N+M)+9N$ unknowns, but each iteration needs a dense $O(N^2)$ matrix and
-$O(N^3)$ factorisation, while the original sparse problem costs about
-$O(N+M)$--$O(N^{1.5})$. Forming $Q$ itself requires factorising $\bar A^\top\bar A$. Long
-trajectories have thousands of poses, so the dense rotation-only problem is slower to solve
-than the larger but sparse original.
+Local measurement factors make the original normal equations sparse. Eliminating all
+positions can introduce long-range couplings between rotations, so an explicitly formed
+$Q$ may be dense. A dense implementation can need $O(N^2)$ storage and $O(N^3)$ direct
+factorisation, despite having fewer degrees of freedom. These are possible costs, not
+universal bounds for SLAM: sparse factorisation depends on graph topology and elimination
+ordering, and the projector can also be applied implicitly using sparse solves.
+Fill-in is not inevitable for every graph (for a connected tree the translational
+incidence matrix has no cycle-space residual). Thus the rotation-only formulation is not
+guaranteed to be faster or slower; its structure and numerical implementation determine
+whether the reduction is useful.

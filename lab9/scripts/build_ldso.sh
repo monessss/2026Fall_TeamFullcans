@@ -16,8 +16,12 @@ if [[ ! -f $B/pangolin/lib/libpangolin.so ]]; then
   cmake --build "$B/pangolin-src/build" -j"$J" --target install
 fi
 
-[[ -d $B/ldso ]] || git clone --depth 1 https://github.com/tum-vision/LDSO.git "$B/ldso"
-cd "$B/ldso"   # master 9b0c48c was used for the report
+LDSO_REV=9b0c48cfd3b3ee95a8dbf1aef2371ed4fca6f81a
+[[ -d $B/ldso ]] || git clone https://github.com/tum-vision/LDSO.git "$B/ldso"
+cd "$B/ldso"
+[[ -z $(git status --porcelain) ]] || { echo "LDSO source has local changes; refusing checkout." >&2; exit 1; }
+git cat-file -e "$LDSO_REV^{commit}" 2>/dev/null || git fetch origin "$LDSO_REV"
+git checkout --detach "$LDSO_REV"
 for d in thirdparty/DBoW3 thirdparty/g2o; do
   cmake -S "$d" -B "$d/build" -DCMAKE_BUILD_TYPE=Release
   cmake --build "$d/build" -j"$J"
@@ -26,3 +30,4 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
     -DPangolin_DIR="$B/pangolin/lib/cmake/Pangolin"
 cmake --build build -j"$J"
 echo "→ $B/ldso/bin/run_dso_euroc"
+

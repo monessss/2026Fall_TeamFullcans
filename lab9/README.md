@@ -1,72 +1,111 @@
-# VNAV 2023 Lab 9 — Visual SLAM: ORB-SLAM3, Kimera-VIO, LDSO
+# Lab7 / VNAV 2023 Lab 9 — Visual SLAM
 
 | Deliverable | 交付文件 |
 | --- | --- |
-| 报告（D1–D7 全部答案、图、表） | [report/lab9_report.pdf](report/lab9_report.pdf) |
-| D1 Spy game（个人） | 报告 §1.1（表 1、图 1） |
-| D2 位姿图初始化（个人） | 报告 §1.2 |
-| D3 ORB-SLAM 模块与错误回环（个人） | 报告 §1.3 |
-| D4（选做）LSD-SLAM / 直接法（个人） | 报告 §1.4 |
-| D5（选做）路标 SLAM → 纯旋转问题（个人） | 报告 §1.5 |
-| D6 不对齐的轨迹对比（团队） | 报告 §2.2（图 2） |
-| D6 与真值对齐后的对比 + ATE（团队） | 报告 §2.3（图 3、表 2） |
-| D7（选做）LDSO + 三者 Sim(3) 对齐对比 | 报告 §2.4（图 4、表 3） |
+| D1–D7 报告、图、表 | [report/lab9_report.pdf](report/lab9_report.pdf) |
+| D1 信息矩阵与边缘化（个人） | [报告 §1.1](report/lab9_report.pdf) |
+| D2 位姿图初始化（个人） | [报告 §1.2](report/lab9_report.pdf) |
+| D3 ORB-SLAM（个人） | [报告 §1.3](report/lab9_report.pdf) |
+| D4 LSD-SLAM（个人选做） | [报告 §1.4](report/lab9_report.pdf) |
+| D5 纯旋转优化（个人选做） | [报告 §1.5](report/lab9_report.pdf) |
+| D6 原始轨迹与真值对齐（团队） | [报告 §2.2–2.3](report/lab9_report.pdf) |
+| D7 LDSO 与三系统对比（团队选做） | [报告 §2.4](report/lab9_report.pdf) |
 
-结果（`MH_01_easy` 全序列，`evo_ape --align`，SE(3)）：ORB-SLAM3 ATE RMSE **0.039 m**，
-Kimera-VIO **0.176 m**；仅对齐首帧时 Kimera 终点漂移 0.62 m（路程的 0.8 %），ORB-SLAM3 为 0.018 m。
-D7：LDSO（单目）原始尺度只有真值的 1/1.52；Sim(3) 对齐后 ATE RMSE 为 **0.043 m**（不闭环时 0.049 m，
-接受了 16 个闭环）。同样用 Sim(3) 对齐，ORB-SLAM3 为 0.021 m，Kimera 为 0.170 m。
+本课程 Lab7 对应 MIT VNAV Lab9，因此保留目录名 lab9。
+本 fork 的修订基于团队提交 37e5d5fe3c7d5dd31f3e9ae8e6d8af4d24975e46。
 
-## 复现
+## 已提交轨迹的结果
 
-前提：镜像 `orbslam:latest`、`kimera:latest` 已构建；数据集在 `~/datasets/vnav/MH_01_easy/mav0`；
-已安装 `evo`、`latexmk`/`xelatex`。
+| 比较 | 参考点 / 对齐 | ATE RMSE |
+| --- | --- | --- |
+| D6 ORB-SLAM3 | body/IMU，SE(3) | 0.038662 m |
+| D6 Kimera-VIO | body/IMU，SE(3) | 0.176039 m |
+| D7 ORB-SLAM3 | cam0，Sim(3) | 0.020378 m |
+| D7 Kimera-VIO | cam0，Sim(3) | 0.170543 m |
+| D7 LDSO | cam0，Sim(3) | 0.025309 m |
+| D7 LDSO，无回环修正输出 | cam0，Sim(3) | 0.038288 m |
 
-一键演示（现场展示画面用，不做评估）：依次弹出 ORB-SLAM3、Kimera-VIO、LDSO 的可视化窗口，
-再显示 D6、D7 的 evo 轨迹图（用 `results/` 里已有的轨迹）。每一项开始前暂停，Enter 开始，s 跳过，q 退出；
-运行中按 Enter 立即结束当前项、进入下一项，不用等它跑完。演示不会改动 `results/` 和 `output/`。
+D7 使用 LeftCameraParams.yaml 的 T_BS，先将机体位姿和真值转换到 cam0：
+T_WC = T_WB T_BC，再进行时间关联和全局对齐。相机距机体原点约 6.89 cm，
+不能用一个全局对齐替代这个随姿态旋转的偏移。LDSO 的原始位姿已经是相机位姿。
+D6 保持机体参考点。所有原始轨迹保留；新图表来自重新评估，不代表重新运行了 SLAM。
+
+原始完整运行日志未随团队提交保存。历史笔记中的 16 次回环、具体运行时间、逐帧完成情况
+不能由稀疏轨迹独立验证；报告已说明这一限制。新启动脚本会保留日志与运行状态摘要。
+
+## 仅用仓库数据复核结果
+
+评估工具在宿主机运行，需要 Python 3.11+；无需 Docker 或再次下载图像数据。
 
 ```bash
-scripts/run_demo.sh
+cd lab9
+python3 -m venv .build/venv
+source .build/venv/bin/activate
+python -m pip install -r scripts/requirements-evaluation.txt
+bash scripts/evaluate.sh --results
+bash scripts/evaluate_d7.sh
+python scripts/make_figures.py
+python scripts/verify_results.py
+python -m unittest discover -s scripts/tests -v
+bash scripts/build_report.sh
 ```
 
-分步执行：
+构建报告需要 latexmk、XeLaTeX 及报告使用的 LaTeX 宏包。
+Debian/Ubuntu 可安装 texlive-xetex、texlive-latex-extra、latexmk。
+PDF 编译产物写入 .build/report，只有最终 PDF 复制到 report/。
+
+## 从图像重新运行
+
+需要 Docker Engine、可用的 X11 显示，以及 EuRoC MH_01_easy 解压目录：
+~/datasets/vnav/MH_01_easy/mav0。可通过 VNAV_DATASET_ROOT 指定 datasets/vnav 的替代目录。
+运行前确认当前用户可以执行 docker。镜像顺序构建，不要并行。
 
 ```bash
-cd ~/2026Fall_TeamFullcans/lab9
-scripts/run_slam.sh            # 依次跑 ORB-SLAM3、Kimera-VIO（各几分钟，不要并行），
-                               # 原始轨迹 -> output/，拷贝到 results/d6/{orbslam,kimera}/
-scripts/evaluate.sh            # fix_timestamps.py、真值 data.tum、evo_traj 两张图、evo_ape
-python3 scripts/make_figures.py  # results/ -> report/figures/，并写 results/d6/metrics.json
-scripts/build_report.sh        # -> report/lab9_report.pdf（中间文件在 .build/）
-
-# D7（选做）：LDSO 编译在仓库外的 ~/vnav-builds/{pangolin,ldso}
-scripts/build_ldso.sh          # Pangolin v0.6 装到本地前缀，LDSO master 9b0c48c，源码未改
-scripts/run_ldso.sh            # 单目 cam0，整条序列约 16 分钟 -> results/d7/results.txt(.noloop)
-scripts/evaluate_d7.sh         # fix_ldso.py 清洗 + evo_traj --align --correct_scale --plot_mode xy + evo_ape
-python3 scripts/make_figures.py && scripts/build_report.sh
+cd lab9
+docker build -t orbslam:latest -f Dockerfile_ORBSLAM3 .
+docker build -t kimera:latest -f Dockerfile_KIMERA .
+bash scripts/run_slam.sh
+bash scripts/evaluate.sh
+bash scripts/build_ldso.sh
+bash scripts/run_ldso.sh
+bash scripts/evaluate_d7.sh
+python scripts/make_figures.py
+python scripts/verify_results.py
+bash scripts/build_report.sh
 ```
 
-注意事项：
+- ORB-SLAM3 新构建固定到 4452a3c4ab75b1cde34e5505a36ec3f9edcdc4c4。
+  历史镜像的 ORB 源码版本未记录；这个 pin 只用于后续构建，不反推历史运行版本。
+- Kimera-VIO 固定到 980ff72d547417ec0b7c79446ae9c7fab7630adf。
+  Kimera-RPGO 固定到 8c5e163ba38345ff583d87403ad53bf966c0221b；其余构建依赖并非全部锁定。
+- LDSO 固定到 9b0c48cfd3b3ee95a8dbf1aef2371ed4fca6f81a；Pangolin 使用 v0.6。
+- 普通 Docker 主机直接使用本地路径和 host 网络。共享 Docker socket 的嵌套容器需显式设置
+  VNAV_HOST_HOME（宿主机上对应容器 $HOME 的路径）；还可分别设置 VNAV_HOST_LAB_DIR、
+  VNAV_HOST_DATASETS、LAB9_NET。脚本不再默认使用队友机器路径或专属网络。
+- X11 需要允许运行容器的用户访问显示；权限设置由宿主机管理，启动脚本不自动扩大显示访问权限。
+- Kimera 的 YAML 兼容处理只替换硬链接副本中的 YAML，不改原始图像、IMU 或真值数据。
+- 新运行退出非零或轨迹验证失败时，不覆盖 results/ 中的已归档轨迹。输出目录里的旧文件
+  不会被当作本轮成功结果。
+- LDSO 评估运行默认 NOGUI=1，自然退出后检查状态；NOGUI=0 时需手动关闭完成后的显示窗口。
+  不再依据“文件已出现”强行终止进程。
+- 新运行日志和 *_run.json 保存在 results/d6 或 results/d7；它们不是对历史日志的重建。
 
-- 容器用 `run_docker_vnav.sh` 启动（会把本容器路径换成 docker 宿主机路径，DISPLAY 默认 `:0`），
-  不要用官方的 `run_docker.sh`。
-- Kimera 用 `cv::FileStorage` 读 `state_groundtruth_estimate0/sensor.yaml`，要求首行是 `%YAML:1.0`，
-  EuRoC 原文件没有这一行，会报 `Cannot open file ... sensor.yaml` 并崩溃。`run_slam.sh` 会用硬链接
-  建一份 `~/datasets/vnav/MH_01_easy_kimera`（不额外占空间），只给其中的 yaml 补上这一行，再用
-  `run_kimera.sh -p /datasets/MH_01_easy_kimera` 运行。原始数据集和 SLAM 源码都没有改。
-- 本容器没有可交互的显示，所以 `evo_traj` 用 `--save_plot` 代替 `--plot`（加 `--plot` 时会卡在
-  `plt.show()`）。原始 evo 图在 `results/d6/evo/` 和 `results/d7/evo/`。
-- LDSO 写完轨迹后会一直等人手动关闭 Pangolin 窗口，`run_ldso.sh` 会在两个结果文件都写出后自动结束它。
-  `NOGUI=1 scripts/run_ldso.sh` 可以不开窗口运行。
+## 现场演示
+
+在依赖、镜像和数据已准备好的可交互终端执行：
+
+```bash
+bash scripts/run_demo.sh
+```
+
+演示显示 GUI 和已有轨迹图；中途停止的演示结果不用于评分指标。
 
 ## 目录
 
-- `report/`：`lab9_report.tex`（主文件）、`sec_individual.tex`（D1–D5）、`references.bib`、`figures/`、PDF
-- `scripts/`：`run_demo.sh`（一键演示）、`run_slam.sh`、`evaluate.sh`、`build_ldso.sh`、`run_ldso.sh`、`fix_ldso.py`、`evaluate_d7.sh`、`make_figures.py`、`build_report.sh`
-- `results/d1/`：从题目 spy 图读出的块稀疏模式，以及脚本校验过的答案
-- `results/d6/`：两个系统的原始轨迹、TUM 格式轨迹、真值 `data.tum`、evo 输出、`metrics.json`、运行日志
-- `results/d7/`：LDSO 原始输出 `results.txt(.noloop)`、清洗后的 `ldso*.txt`、evo 输出、`metrics.json`、运行日志
-- `notes/`：过程记录
-- 官方文件：`lab9_exercises.md`、`Dockerfile_*`、`run_docker.sh`、`.run_*.sh`、`orb_slam.patch`、
-  `fix_timestamps.py`、`params/`；`output/` 是 SLAM 容器的挂载输出目录（已在 gitignore 中忽略）
+- report/：最终 PDF、LaTeX、参考文献和引用的图。
+- results/d1/：spy 模式与符号消元结果。
+- results/d6/：原始 body 轨迹、真值、D6 评估。
+- results/d7/：LDSO 原始输出和 D7 评估；cam0 转换轨迹与真值按需生成到 .build/d7_frames/。
+- results/validation_summary.json：基于当前归档数据的独立数值复核及文件哈希。
+- scripts/：运行、转换、评估、回归检查和报告构建。
+- notes/：历史笔记及本次修订的验证范围。

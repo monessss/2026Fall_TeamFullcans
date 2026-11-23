@@ -1,11 +1,12 @@
 --------------------------------------------------------------------------------
 Loaded 36382 stamps and poses from: results/d6/data.tum
-Loaded 3678 stamps and poses from: output/orbslam/orb_slam3.txt
+Loaded 3678 stamps and poses from: results/d6/orbslam/orb_slam3.txt
 --------------------------------------------------------------------------------
-Synchronizing trajectories...
+Synchronizing trajectories (nearest_time method)...
+Timestamps are sorted, using binary search for matching.
 Found 3638 of max. 3678 possible matching timestamps between...
 	results/d6/data.tum
-and:	output/orbslam/orb_slam3.txt
+and:	results/d6/orbslam/orb_slam3.txt
 ..with max. time diff.: 0.01 (s) and time offset: 0.0 (s).
 --------------------------------------------------------------------------------
 Aligning using Umeyama's method... (with scale correction)
@@ -15,7 +16,7 @@ Rotation of alignment:
  [ 0.93924704 -0.04962869 -0.33963509]]
 Translation of alignment:
 [ 4.68722367 -1.77606539  0.87084139]
-Scale correction: 1.0076301920692003
+Scale correction: 1.0076301920692001
 --------------------------------------------------------------------------------
 Compared 3638 absolute pose pairs.
 Calculating APE for translation part pose relation...

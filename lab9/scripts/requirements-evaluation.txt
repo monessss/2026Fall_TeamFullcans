@@ -1,0 +1,5 @@
+# Python 3.11+; evaluated with these versions.
+evo==1.38.1
+numpy==2.3.5
+scipy==1.17.0
+matplotlib==3.10.8

@@ -5,6 +5,8 @@
 *.bbl
 *.blg
 *.log
+!lab9/results/d6/*_run.log
+!lab9/results/d7/*_run.log
 *.zip
 lab3/codex-session-lab3.md
 lab4/codex-session-lab4.md

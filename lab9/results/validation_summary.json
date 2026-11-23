@@ -1,0 +1,91 @@
+{
+  "scope": "re-evaluation of archived trajectories; no new SLAM run",
+  "versions": {
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "evo": "1.38.1",
+    "matplotlib": "3.10.8"
+  },
+  "checks": {
+    "d6": {
+      "Kimera-VIO": {
+        "matched_poses": 813,
+        "se3_rmse": 0.17603911768416947,
+        "sim3_rmse": 0.16973078993363389,
+        "sim3_scale": 1.011329837706247
+      },
+      "ORB-SLAM3": {
+        "matched_poses": 3638,
+        "se3_rmse": 0.0386624449762326,
+        "sim3_rmse": 0.020757056095212195,
+        "sim3_scale": 1.0076301920692006
+      }
+    },
+    "d7": {
+      "Kimera-VIO": {
+        "matched_poses": 813,
+        "se3_rmse": 0.17691883464562255,
+        "sim3_rmse": 0.17054334224163264,
+        "sim3_scale": 1.0113760221120212
+      },
+      "ORB-SLAM3": {
+        "matched_poses": 3638,
+        "se3_rmse": 0.03867483774057918,
+        "sim3_rmse": 0.020378219950768238,
+        "sim3_scale": 1.0076599014625114
+      },
+      "LDSO": {
+        "matched_poses": 696,
+        "se3_rmse": 1.5890324529984465,
+        "sim3_rmse": 0.025309272588312136,
+        "sim3_scale": 1.5301955418686137
+      },
+      "LDSO (no loop closure)": {
+        "matched_poses": 696,
+        "se3_rmse": 1.6086903705638884,
+        "sim3_rmse": 0.038287611073895896,
+        "sim3_scale": 1.5401845797874194
+      }
+    },
+    "common_d6_time_grid": {
+      "Kimera-VIO": {
+        "matched_poses": 813,
+        "se3_rmse": 0.17603911768534405,
+        "sim3_rmse": 0.16973078993309285,
+        "sim3_scale": 1.0113298377077986
+      },
+      "ORB-SLAM3": {
+        "matched_poses": 813,
+        "se3_rmse": 0.038002691127093334,
+        "sim3_rmse": 0.021505321094729638,
+        "sim3_scale": 1.0075665005532388
+      }
+    },
+    "conversion_checks": "passed"
+  },
+  "sha256": {
+    "results/d1/answers.json": "e41464b0ac79de7589bb6cef35aec00e6f4c02c45a4af3cf566dcd345eb3d0b8",
+    "results/d1/spy_pattern.txt": "7968ccad8c01d79bae3e810db94b958be79b13ad0d9bcdc9a840724d03a0f4f6",
+    "results/d6/data.tum": "f5df5393dc53c1da14e03c314795ecfe0c8ce95c72f32a08424f2ccdd3b3c121",
+    "results/d6/evo/ape_kimera.txt": "8490e27e7e4d3d9cc2d2a21bead0edd3f96a6d8873f8b05dadcfc2e63bf6bdcb",
+    "results/d6/evo/ape_kimera_sim3.txt": "b34acfb278c0ca26358cac186180d9da2d40063c3a12ed046edf78c3e9730a04",
+    "results/d6/evo/ape_orb_slam3.txt": "11d39c86d2f3dc7e44c46d5e57c61eb6cb264eea127aa86fdcc42613ed22dc02",
+    "results/d6/evo/ape_orb_slam3_sim3.txt": "0828cf8ed0f5bcd8e546a603306426a8b4b5022139bcc35efce3659bcefd0630",
+    "results/d6/evo/traj_aligned.txt": "2b916f13cc5d38a5188755a633a226be0e0fb7effeb29f4d999a7fb05cb9eb43",
+    "results/d6/evo/traj_unaligned.txt": "58f6c4a4f7115ed8872dda9702a4caa7cc078afc6094851cfd02f24fa0472654",
+    "results/d6/kimera/StatisticsVIO.csv": "976261bb9d5ea8348d78b10ceb5dda013311e1d50ec50235b58f1b4ff0a54a45",
+    "results/d6/kimera/kimera.txt": "5d38afd12c45ed5a522ff13027855de7f1673e9269bd020cd77fd245fd2b8570",
+    "results/d6/kimera/traj_vio.csv": "995f5cc1764b1dcd5d7829c6683808ea0662833eaf8cb7ed9267b25b5b343c10",
+    "results/d6/metrics.json": "9c50d6cdef58a5d343508196bba3b130e57238cc6c21c3b4ee1952a1a4d7b0a5",
+    "results/d6/orbslam/CameraTrajectory.txt": "b6cbe1baa2d992097378ef8ab44793f127002633e1a220138d6d55ee6ddb7a72",
+    "results/d6/orbslam/orb_slam3.txt": "aa58f91d6289879f8fefac8354cb3b41db7f8f7c686422c1959b515dd2563a95",
+    "results/d7/evo/ape_ldso_noloop_sim3.txt": "82b871bc6649081782ba838e9a1ec4a0557f6b23d5947d14c558a0d4bf5c9075",
+    "results/d7/evo/ape_ldso_sim3.txt": "77298a8c1d2a940fa673be61abee7dc5fd3687db1a50034436bcfc3ab25cf3e1",
+    "results/d7/evo/traj_sim3_xy.txt": "f9a312454d6691d7d542b39f50a9a19ef6799d84c4f89f54f09b481e93ca2af4",
+    "results/d7/ldso.txt": "81a208c58f3c637140ce9166bcd4d560f8f67f2eabd6809b870b46ef17000990",
+    "results/d7/ldso_noloop.txt": "f1c6cb5780d1a7e5a0180fb34b880e8b7ec785555b271bb95cafebf0d07d25a4",
+    "results/d7/metrics.json": "a0fe81051177fe5a127f245a9b740ac0d40af6fbc0a465bc68a365f5c49fd096",
+    "results/d7/results.txt": "e38b6a706ceca72ae410be6b457834758e8a11df539abc495cbb7f667a89836f"
+  },
+  "historical_runtime_logs_available": false
+}

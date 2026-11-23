@@ -1,11 +1,12 @@
 --------------------------------------------------------------------------------
 Loaded 36382 stamps and poses from: results/d6/data.tum
-Loaded 818 stamps and poses from: output/kimera/kimera.txt
+Loaded 818 stamps and poses from: results/d6/kimera/kimera.txt
 --------------------------------------------------------------------------------
-Synchronizing trajectories...
+Synchronizing trajectories (nearest_time method)...
+Timestamps are sorted, using binary search for matching.
 Found 813 of max. 818 possible matching timestamps between...
 	results/d6/data.tum
-and:	output/kimera/kimera.txt
+and:	results/d6/kimera/kimera.txt
 ..with max. time diff.: 0.01 (s) and time offset: 0.0 (s).
 --------------------------------------------------------------------------------
 Aligning using Umeyama's method... (with scale correction)

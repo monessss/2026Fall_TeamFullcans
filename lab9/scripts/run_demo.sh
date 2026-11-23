@@ -15,7 +15,7 @@ cd "$LAB"
 export DISPLAY=${DISPLAY:-:0}
 DEMO=$LAB/.build/demo
 mkdir -p "$DEMO"
-DS=$HOME/datasets/vnav
+DS=${VNAV_DATASET_ROOT:-$HOME/datasets/vnav}
 
 die() { printf '\033[1;31merror: %s\033[0m\n' "$*" >&2; exit 1; }
 [[ -r /dev/tty ]] && { : </dev/tty; } 2>/dev/null || die "needs an interactive terminal"
@@ -60,19 +60,20 @@ show() {
 }
 
 # output/ is the SLAM containers' mount; keep the full-run files safe from a stopped demo run
-backup_output()  { rm -rf "$DEMO/output.bak"; cp -a output "$DEMO/output.bak"; }
+backup_output()  { mkdir -p output; rm -rf "$DEMO/output.bak"; cp -a output "$DEMO/output.bak"; }
 restore_output() { rm -rf output; mv "$DEMO/output.bak" output; }
 need_free() {  # 15 GB RAM: never two SLAM systems at once
   local busy
   busy=$(docker ps --filter 'name=^lab9-' --format '{{.Names}}'; pgrep -x run_dso_euroc || true)
   [[ -z $busy ]] || die "another SLAM system is still running: $(echo $busy)"
 }
-need_image() { docker image inspect "$1" >/dev/null 2>&1 || die "docker image $1 missing (do not rebuild, ask)"; }
+need_image() { docker image inspect "$1" >/dev/null 2>&1 || die "docker image $1 missing: build it with the supplied Dockerfile"; }
 # on exit (also Ctrl-C): stop whatever is still running and put output/ back
 CUR=
+OWNED_CONTAINER=
 cleanup_all() {
   [[ -n $CUR ]] && kill -KILL -- "-$CUR" 2>/dev/null
-  docker rm -f lab9-orbslam lab9-kimera >/dev/null 2>&1
+  [[ -z $OWNED_CONTAINER ]] || docker rm -f "$OWNED_CONTAINER" >/dev/null 2>&1
   [[ -d $DEMO/output.bak ]] && restore_output
   return 0
 }
@@ -97,15 +98,19 @@ fi
 # ---------------------------------------------------------------- SLAM GUIs
 if item "D6 ORB-SLAM3（双目 + IMU）" "docker orbslam:latest，Pangolin 窗口显示特征点、关键帧和地图点。"; then
   need_image orbslam:latest; need_free; backup_output
+  OWNED_CONTAINER=lab9-orbslam
   show "$DEMO/orbslam.log" "docker rm -f lab9-orbslam >/dev/null 2>&1" ./run_docker_vnav.sh orbslam:latest
+  OWNED_CONTAINER=
   restore_output
 fi
 if item "D6 Kimera-VIO（双目 + IMU）" "docker kimera:latest，OpenCV 窗口显示特征跟踪和 3D 轨迹。"; then
   need_image kimera:latest; need_free
   [[ -d $DS/MH_01_easy_kimera ]] || die "missing $DS/MH_01_easy_kimera: run scripts/run_slam.sh kimera once"
   backup_output
+  OWNED_CONTAINER=lab9-kimera
   show "$DEMO/kimera.log" "docker rm -f lab9-kimera >/dev/null 2>&1" \
     ./run_docker_vnav.sh kimera:latest bash run_kimera.sh -p /datasets/MH_01_easy_kimera
+  OWNED_CONTAINER=
   restore_output
 fi
 if item "D7 LDSO（单目 cam0，带闭环）" "Pangolin 窗口显示直接法的点云和关键帧，检测到闭环时轨迹会被拉回。"; then
@@ -127,8 +132,10 @@ if item "D6 轨迹对比图（evo_traj）" "用 results/d6 里已有的轨迹，
     evo_traj tum $D6/kimera/kimera.txt $D6/orbslam/orb_slam3.txt --ref $D6/data.tum --align --plot --plot_mode xyz
 fi
 if item "D7 三系统 Sim(3) 对齐图（evo_traj）" "Kimera、ORB-SLAM3、LDSO 与真值做 Sim(3) 对齐（修正尺度），x-y 平面。"; then
+  python3 scripts/trajectory_frames.py
   show "$DEMO/evo_d7.log" : \
-    evo_traj tum $D6/kimera/kimera.txt $D6/orbslam/orb_slam3.txt $D7/ldso.txt --ref $D6/data.tum \
+    evo_traj tum .build/d7_frames/kimera_cam0.txt .build/d7_frames/orb_slam3_cam0.txt $D7/ldso.txt --ref .build/d7_frames/data_cam0.tum \
       --align --correct_scale --plot --plot_mode xy
 fi
 echo; echo "演示结束。"
+
